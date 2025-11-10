@@ -20,11 +20,13 @@ import { AdminModule } from './admin/admin.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
+        const uri = configService.get<string>('MONGO_URI') || 'mongodb://localhost:27017/comicverse';
+        console.log('Connecting to MongoDB at:', uri);
         return {
-          uri:
-            configService.get<string>('MONGO_URI') ||
-            'mongodb://localhost:27017/comicverse',
-          // you can add mongoose options here if needed
+          uri,
+          useNewUrlParser: true,
+          useUnifiedTopology: true,
+          serverSelectionTimeoutMS: 5000,
         };
       },
     }),
