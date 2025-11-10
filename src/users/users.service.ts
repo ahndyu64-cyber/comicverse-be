@@ -47,6 +47,17 @@ export class UsersService {
     return { message: 'Unfollowed' };
   }
 
+  async updateUserRoles(userId: string, roles: UserRole[]) {
+    if (!Types.ObjectId.isValid(userId)) throw new NotFoundException('User not found');
+    const user = await this.userModel.findByIdAndUpdate(
+      userId,
+      { roles },
+      { new: true }
+    ).exec();
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
   async getFollowing(userId: string) {
     const user = await this.userModel.findById(userId).populate('followingComics').select('followingComics').exec();
     if (!user) throw new NotFoundException('User not found');
