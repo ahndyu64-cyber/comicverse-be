@@ -33,6 +33,21 @@ export class CommentsService {
     return { items, total, page, limit };
   }
 
+  async findForComicFlat(comicId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [items, total] = await Promise.all([
+      this.commentModel
+        .find({ comic: new Types.ObjectId(comicId), isHidden: false })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('user', 'username avatar')
+        .exec(),
+      this.commentModel.countDocuments({ comic: new Types.ObjectId(comicId), isHidden: false }).exec(),
+    ]);
+    return items;
+  }
+
   async update(userId: string, commentId: string, dto: UpdateCommentDto) {
     const comment = await this.commentModel.findById(commentId).exec();
     if (!comment) throw new NotFoundException('Comment not found');

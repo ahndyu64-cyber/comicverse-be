@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { ComicsService } from '../comics/comics.service';
 import { FilterComicsDto, UpdateComicDto } from '../comics/dto/filter-comics.dto';
@@ -21,10 +21,33 @@ export class AdminService {
   }
 
   async updateUserRoles(id: string, roles: UserRole[]) {
-    const user = await (this.usersService as any).findById(id);
-    if (!user) throw new NotFoundException('User not found');
-    user.roles = roles;
-    return user.save();
+    // Validate input
+    if (!Array.isArray(roles)) throw new BadRequestException('roles must be an array');
+    const allowed = new Set(Object.values(UserRole));
+    // normalize to lowercase strings and keep only allowed values
+    const normalized = Array.from(
+      new Set(
+        roles
+          .map((r: any) => {
+            if (typeof r === 'string') return r.toLowerCase();
+            if (r && typeof r === 'object') {
+              // common shapes from select components: { value: 'admin' } or { role: 'admin' } or { label: 'Admin' }
+              const candidate = r.value ?? r.role ?? r.name ?? r.label ?? r.id ?? '';
+              if (typeof candidate === 'string') return candidate.toLowerCase();
+            }
+            return '';
+          })
+          .filter((r: string) => r && allowed.has(r as UserRole)),
+      ),
+    );
+    if (normalized.length === 0) {
+      throw new BadRequestException(
+        `No valid roles provided. Received: ${JSON.stringify(roles)}. Valid roles are: ${Array.from(allowed).join(', ')}`,
+      );
+    }
+
+    // Use usersService update helper (atomic)
+    return this.usersService.updateUserRoles(id, normalized as UserRole[]);
   }
 
   async deleteUser(id: string) {

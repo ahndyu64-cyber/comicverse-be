@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -72,11 +73,23 @@ export class ComicsController {
     return this.comicsService.addChapter(id, dto);
   }
 
+  @Get(':id/chapters/:chapterId')
+  getChapterById(@Param('id') id: string, @Param('chapterId') chapterId: string) {
+    return this.comicsService.getChapterById(id, chapterId);
+  }
+
   @Put(':id/chapters/:index')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.UPLOADER, UserRole.ADMIN)
   updateChapter(@Param('id') id: string, @Param('index') index: string, @Body() dto: UpdateChapterDto) {
     return this.comicsService.updateChapter(id, +index, dto);
+  }
+
+  @Patch(':id/chapters/:chapterId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.UPLOADER, UserRole.ADMIN)
+  updateChapterById(@Param('id') id: string, @Param('chapterId') chapterId: string, @Body() dto: UpdateChapterDto) {
+    return this.comicsService.updateChapterById(id, chapterId, dto);
   }
 
   @Delete(':id/chapters/:index')

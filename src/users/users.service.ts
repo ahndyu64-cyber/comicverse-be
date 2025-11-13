@@ -49,12 +49,11 @@ export class UsersService {
 
   async updateUserRoles(userId: string, roles: UserRole[]) {
     if (!Types.ObjectId.isValid(userId)) throw new NotFoundException('User not found');
-    const user = await this.userModel.findByIdAndUpdate(
-      userId,
-      { roles },
-      { new: true }
-    ).exec();
+    const user = await this.userModel.findById(userId).exec();
     if (!user) throw new NotFoundException('User not found');
+    user.roles = roles;
+    user.markModified('roles');
+    await user.save();
     return user;
   }
 
@@ -80,9 +79,11 @@ export class UsersService {
   }
 
   async setRoles(id: string, roles: UserRole[]) {
+    if (!Types.ObjectId.isValid(id)) throw new NotFoundException('User not found');
     const user = await this.userModel.findById(id).exec();
     if (!user) throw new NotFoundException('User not found');
-    user.roles = [UserRole.ADMIN, UserRole.UPLOADER];
+    user.roles = roles;
+    user.markModified('roles');
     await user.save();
     return user;
   }

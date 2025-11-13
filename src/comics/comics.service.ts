@@ -114,18 +114,61 @@ export class ComicsService {
     return comic.save();
   }
 
+  async getChapterById(comicId: string, chapterId: string) {
+    if (!Types.ObjectId.isValid(chapterId)) throw new NotFoundException('Chapter not found');
+    const comic = await this.findById(comicId);
+    if (!comic.chapters) {
+      throw new NotFoundException('Chapter not found');
+    }
+    const chapter = comic.chapters.find((ch) => ch._id?.toString() === chapterId);
+    if (!chapter) {
+      throw new NotFoundException('Chapter not found');
+    }
+    return { comicId: comic._id, chapter };
+  }
+
   async updateChapter(comicId: string, chapterIndex: number, dto: UpdateChapterDto) {
     const comic = await this.findById(comicId);
-    if (chapterIndex < 0 || chapterIndex >= comic.chapters.length) {
+    if (!comic.chapters || chapterIndex < 0 || chapterIndex >= comic.chapters.length) {
+      throw new NotFoundException('Chapter not found');
+    }
+    const chapter = comic.chapters[chapterIndex];
+    if (!chapter) {
       throw new NotFoundException('Chapter not found');
     }
     if (dto.title) {
-      comic.chapters[chapterIndex].title = dto.title;
-      comic.chapters[chapterIndex].slug = dto.title.toLowerCase().replace(/\s+/g, '-');
+      (chapter as any).title = dto.title;
+      (chapter as any).slug = dto.title.toLowerCase().replace(/\s+/g, '-');
     }
-    if (dto.images) {
-      comic.chapters[chapterIndex].images = dto.images;
+    if (dto.images !== undefined) {
+      (chapter as any).images = dto.images;
     }
+    comic.markModified('chapters');
+    return comic.save();
+  }
+
+  async updateChapterById(comicId: string, chapterId: string, dto: UpdateChapterDto) {
+    if (!Types.ObjectId.isValid(chapterId)) throw new NotFoundException('Chapter not found');
+    const comic = await this.findById(comicId);
+    if (!comic.chapters) {
+      throw new NotFoundException('Chapter not found');
+    }
+    const chapterIndex = comic.chapters.findIndex((ch) => ch._id?.toString() === chapterId);
+    if (chapterIndex === -1) {
+      throw new NotFoundException('Chapter not found');
+    }
+    const chapter = comic.chapters[chapterIndex];
+    if (!chapter) {
+      throw new NotFoundException('Chapter not found');
+    }
+    if (dto.title) {
+      (chapter as any).title = dto.title;
+      (chapter as any).slug = dto.title.toLowerCase().replace(/\s+/g, '-');
+    }
+    if (dto.images !== undefined) {
+      (chapter as any).images = dto.images;
+    }
+    comic.markModified('chapters');
     return comic.save();
   }
 
