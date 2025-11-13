@@ -17,51 +17,56 @@ export class ComicsService {
   }
 
   async findAll(filterDto: FilterComicsDto = {}) {
-    const {
-      genres,
-      status,
-      search,
-      sortBy = 'latest',
-      order = 'desc',
-      page = 1,
-      limit = 20,
-    } = filterDto as any;
+    try {
+      const {
+        genres,
+        status,
+        search,
+        sortBy = 'latest',
+        order = 'desc',
+        page = 1,
+        limit = 20,
+      } = filterDto as any;
 
-    const query: any = {};
-    const skip = (page - 1) * limit;
+      const query: any = {};
+      const skip = (page - 1) * limit;
 
-    if (genres?.length) {
-      query.genres = { $all: genres };
+      if (genres?.length) {
+        query.genres = { $all: genres };
+      }
+
+      if (status) {
+        query.status = status;
+      }
+
+      if (search) {
+        query.$or = [
+          { title: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+        ];
+      }
+
+      const sort: any = {};
+      switch (sortBy) {
+        case 'views':
+          sort.views = order === 'desc' ? -1 : 1;
+          break;
+        case 'title':
+          sort.title = order === 'desc' ? -1 : 1;
+          break;
+        default:
+          sort.updatedAt = order === 'desc' ? -1 : 1;
+      }
+
+      const [items, total] = await Promise.all([
+        this.comicModel.find(query).sort(sort).skip(skip).limit(limit).exec(),
+        this.comicModel.countDocuments(query).exec(),
+      ]);
+      return { items, total, page, limit };
+    } catch (error) {
+      console.error('Error in findAll:', error);
+      throw error;
     }
-
-    if (status) {
-      query.status = status;
-    }
-
-    if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-      ];
-    }
-
-    const sort: any = {};
-    switch (sortBy) {
-      case 'views':
-        sort.views = order === 'desc' ? -1 : 1;
-        break;
-      case 'title':
-        sort.title = order === 'desc' ? -1 : 1;
-        break;
-      default:
-        sort.updatedAt = order === 'desc' ? -1 : 1;
-    }
-
-    const [items, total] = await Promise.all([
-      this.comicModel.find(query).sort(sort).skip(skip).limit(limit).exec(),
-      this.comicModel.countDocuments(query).exec(),
-    ]);
-    return { items, total, page, limit };
   }
 
   async findByIds(ids: string[]) {

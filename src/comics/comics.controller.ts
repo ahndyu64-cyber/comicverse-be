@@ -25,19 +25,34 @@ import { UsersService } from '../users/users.service';
 export class ComicsController {
   constructor(private readonly comicsService: ComicsService, private readonly usersService: UsersService) {}
 
-  @Get()
-  findAll(@Query() filterDto: FilterComicsDto) {
-    return this.comicsService.findAll(filterDto as any);
-  }
-
   @Get('hot')
   getHot(@Query('limit') limit = '10') {
-    return this.comicsService.findHotComics(+limit);
+    try {
+      return this.comicsService.findHotComics(+limit);
+    } catch (error) {
+      console.error('Error in getHot:', error);
+      throw error;
+    }
   }
 
   @Get('latest')
   getLatest(@Query('limit') limit = '20') {
-    return this.comicsService.findLatestUpdates(+limit);
+    try {
+      return this.comicsService.findLatestUpdates(+limit);
+    } catch (error) {
+      console.error('Error in getLatest:', error);
+      throw error;
+    }
+  }
+
+  @Get()
+  findAll(@Query() filterDto: FilterComicsDto) {
+    try {
+      return this.comicsService.findAll(filterDto as any);
+    } catch (error) {
+      console.error('Error in findAll:', error);
+      throw error;
+    }
   }
 
   @Get(':id')

@@ -29,6 +29,9 @@ export class Comic {
 
   @Prop({ type: [ChapterSchema], default: [] })
   chapters: Chapter[];
+
+  @Prop({ default: 0 })
+  views: number;
 }
 
 export type ComicDocument = Comic & Document;

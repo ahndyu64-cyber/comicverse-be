@@ -11,7 +11,7 @@ import { UserRole } from '../auth/schemas/user.schema';
 export class AdminController {
   constructor(private adminService: AdminService) {}
 
-  // Users
+  
   @Get('users')
   async listUsers(@Query() query: any) {
     return this.adminService.listUsers(query);
@@ -27,21 +27,14 @@ export class AdminController {
     return this.adminService.updateUserRoles(id, roles);
   }
 
-  // Support legacy or frontend calls that PATCH /admin/users/:id with { roles: [...] }
   @Patch('users/:id')
   async patchUser(@Param('id') id: string, @Body() body: any) {
-    // Accept several payload shapes from frontend for compatibility:
-    // - { roles: [...] }
-    // - { role: 'admin' } (single role)
-    // - { assignAdmin: true } / { removeAdmin: true }
-    // - { rolesList: [...] } or { selectedRoles: [...] } (alternative field names)
 
-    // 1) explicit roles array
     if (body && body.roles && Array.isArray(body.roles)) {
       return this.adminService.updateUserRoles(id, body.roles as UserRole[]);
     }
 
-    // 2) alternative field names for roles
+    
     if (body && (body.rolesList || body.selectedRoles)) {
       const roles = body.rolesList || body.selectedRoles;
       if (Array.isArray(roles)) {
@@ -49,13 +42,13 @@ export class AdminController {
       }
     }
 
-    // 3) single role provided
+    
     if (body && body.role) {
       const roles = Array.isArray(body.role) ? body.role : [body.role];
       return this.adminService.updateUserRoles(id, roles as UserRole[]);
     }
 
-    // 4) assign/remove admin flags
+    
     if (body && (body.assignAdmin === true || body.removeAdmin === true)) {
       const user = await this.adminService.getUser(id);
       if (!user) throw new NotFoundException('User not found');
@@ -79,7 +72,7 @@ export class AdminController {
     return this.adminService.deleteUser(id);
   }
 
-  // Comics
+
   @Get('comics')
   async listComics(@Query() query: any) {
     return this.adminService.listComics(query);
