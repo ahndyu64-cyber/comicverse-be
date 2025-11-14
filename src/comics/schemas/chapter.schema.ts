@@ -17,9 +17,13 @@ export class Chapter {
   @Prop({ type: [String], default: [] })
   images: string[];
 
+  @Prop({ type: [String], default: [] })
+  imagePublicIds?: string[];
+
   @Prop({ default: false })
   isDraft?: boolean;
 }
 
 export const ChapterSchema = SchemaFactory.createForClass(Chapter);
 export type ChapterDocument = Chapter & Document;
+

@@ -16,6 +16,9 @@ export class Comic {
   cover?: string;
 
   @Prop()
+  coverPublicId?: string;
+
+  @Prop()
   description?: string;
 
   @Prop({ type: [String], default: [] })
@@ -36,3 +39,4 @@ export class Comic {
 
 export type ComicDocument = Comic & Document;
 export const ComicSchema = SchemaFactory.createForClass(Comic);
+

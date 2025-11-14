@@ -5,10 +5,14 @@ import { Comic, ComicDocument } from './schemas/comic.schema';
 import { CreateComicDto } from './dto/create-comic.dto';
 import { CreateChapterDto } from './dto/create-chapter.dto';
 import { FilterComicsDto, UpdateComicDto, UpdateChapterDto } from './dto/filter-comics.dto';
+import { CloudinaryService } from '../upload/cloudinary.service';
 
 @Injectable()
 export class ComicsService {
-  constructor(@InjectModel(Comic.name) private comicModel: Model<ComicDocument>) {}
+  constructor(
+    @InjectModel(Comic.name) private comicModel: Model<ComicDocument>,
+    private cloudinaryService: CloudinaryService,
+  ) {}
 
   async create(dto: CreateComicDto) {
     const slug = dto.title.toLowerCase().replace(/\s+/g, '-');
@@ -108,6 +112,25 @@ export class ComicsService {
   async delete(id: string) {
     const deleted = await this.comicModel.findByIdAndDelete(id).exec();
     if (!deleted) throw new NotFoundException('Comic not found');
+    
+    // Delete cover image from Cloudinary if exists
+    if (deleted.coverPublicId) {
+      await this.cloudinaryService.deleteImage(deleted.coverPublicId);
+    }
+    
+    // Delete all chapter images from Cloudinary
+    const allImagePublicIds: string[] = [];
+    if (deleted.chapters) {
+      deleted.chapters.forEach((chapter: any) => {
+        if (chapter.imagePublicIds && chapter.imagePublicIds.length > 0) {
+          allImagePublicIds.push(...chapter.imagePublicIds);
+        }
+      });
+    }
+    if (allImagePublicIds.length > 0) {
+      await this.cloudinaryService.deleteMultipleImages(allImagePublicIds);
+    }
+    
     return { message: 'Comic deleted successfully' };
   }
 
@@ -182,6 +205,13 @@ export class ComicsService {
     if (chapterIndex < 0 || chapterIndex >= comic.chapters.length) {
       throw new NotFoundException('Chapter not found');
     }
+    
+    // Delete chapter images from Cloudinary
+    const chapter = comic.chapters[chapterIndex];
+    if (chapter && (chapter as any).imagePublicIds && (chapter as any).imagePublicIds.length > 0) {
+      await this.cloudinaryService.deleteMultipleImages((chapter as any).imagePublicIds);
+    }
+    
     comic.chapters.splice(chapterIndex, 1);
     return comic.save();
   }

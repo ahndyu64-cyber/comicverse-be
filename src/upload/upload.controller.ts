@@ -1,36 +1,55 @@
-import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, BadRequestException, Query, Res } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { memoryStorage } from 'multer';
+import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CloudinaryService } from './cloudinary.service';
 
 @Controller('upload')
 export class UploadController {
+  constructor(private readonly cloudinaryService: CloudinaryService) {}
+
   @Post()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: join(process.cwd(), 'uploads'),
-        filename: (req, file, cb) => {
-          const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-          const fileExtName = extname(file.originalname);
-          cb(null, `${name}${fileExtName}`);
-        },
-      }),
+      storage: memoryStorage(),
       fileFilter: (req, file, cb) => {
-        if (!file.mimetype.match(/image\/(png|jpg|jpeg)/)) {
-          return cb(new BadRequestException('Only PNG/JPG images are allowed') as any, false);
+        if (!file.mimetype.match(/image\/(png|jpg|jpeg|gif|webp)/)) {
+          return cb(new BadRequestException('Only PNG/JPG/GIF/WebP images are allowed') as any, false);
         }
         cb(null, true);
       },
       limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
     }),
   )
-  uploadFile(@UploadedFile() file: any) {
-    if (!file) throw new BadRequestException('No file uploaded');
-    // return a public URL path. Ensure main.ts serves /uploads static
-    const url = `${process.env.BASE_URL || ''}/uploads/${file.filename}`;
-    return { url, filename: file.filename };
+  async uploadFile(@UploadedFile() file: any, @Query('type') type: string = 'cover', @Res() res: Response) {
+    try {
+      if (!file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      console.log(`[Upload] Starting ${type} upload for file: ${file.originalname}`);
+
+      const result = type === 'chapter' 
+        ? await this.cloudinaryService.uploadChapterImage(file)
+        : await this.cloudinaryService.uploadCoverImage(file);
+      
+      console.log(`[Upload] Success - URL: ${result.url}`);
+
+      return res.status(200).json({
+        url: result.url,
+        public_id: result.public_id,
+      });
+    } catch (error: any) {
+      console.error('[Upload] Error:', error);
+      return res.status(500).json({
+        error: 'Upload failed',
+        message: error.message,
+        details: error.response?.error?.message || error.message,
+      });
+    }
   }
 }
+
+

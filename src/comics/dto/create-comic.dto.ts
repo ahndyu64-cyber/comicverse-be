@@ -13,6 +13,10 @@ export class CreateComicDto {
   cover?: string;
 
   @IsOptional()
+  @IsString()
+  coverPublicId?: string;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   authors?: string[];
@@ -22,3 +26,4 @@ export class CreateComicDto {
   @IsString({ each: true })
   genres?: string[];
 }
+

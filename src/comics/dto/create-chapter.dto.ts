@@ -8,4 +8,9 @@ export class CreateChapterDto {
   @IsArray()
   @IsString({ each: true })
   images?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  imagePublicIds?: string[];
 }
