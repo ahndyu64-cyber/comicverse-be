@@ -37,7 +37,7 @@ export class AuthService {
     await this.updateRefreshToken(user._id.toString(), tokens.refreshToken);
 
     return {
-      user: { id: user._id, email: user.email, username: user.username },
+      user: { id: user._id, email: user.email, username: user.username, roles: user.roles },
       ...tokens,
     };
   }
@@ -61,7 +61,7 @@ export class AuthService {
     await this.updateRefreshToken(user._id.toString(), tokens.refreshToken);
 
     return {
-      user: { id: user._id, email: user.email, username: user.username },
+      user: { id: user._id, email: user.email, username: user.username, roles: user.roles },
       ...tokens,
     };
   }
@@ -164,7 +164,7 @@ export class AuthService {
     const tokens = await this.getTokens(user._id.toString(), user.email);
     await this.updateRefreshToken(user._id.toString(), tokens.refreshToken);
     return {
-      user: { id: user._id, email: user.email, username: user.username },
+      user: { id: user._id, email: user.email, username: user.username, roles: user.roles },
       ...tokens,
     };
   }

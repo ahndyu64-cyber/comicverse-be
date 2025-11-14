@@ -21,6 +21,9 @@ export class Comic {
   @Prop()
   description?: string;
 
+  @Prop({ type: String, ref: 'User' })
+  uploaderId?: string;
+
   @Prop({ type: [String], default: [] })
   authors: string[];
 

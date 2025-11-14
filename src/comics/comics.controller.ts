@@ -63,29 +63,30 @@ export class ComicsController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.UPLOADER, UserRole.ADMIN)
-  create(@Body() dto: CreateComicDto) {
-    return this.comicsService.create(dto);
+  create(@Request() req, @Body() dto: CreateComicDto) {
+    return this.comicsService.create(dto, req.user.sub);
   }
 
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.UPLOADER, UserRole.ADMIN)
-  update(@Param('id') id: string, @Body() dto: UpdateComicDto) {
-    return this.comicsService.update(id, dto);
+  update(@Request() req, @Param('id') id: string, @Body() dto: UpdateComicDto) {
+    console.log('Update comic - User:', req.user);
+    return this.comicsService.updateWithAuth(id, dto, req.user.sub, req.user.roles);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  remove(@Param('id') id: string) {
-    return this.comicsService.delete(id);
+  @Roles(UserRole.UPLOADER, UserRole.ADMIN)
+  remove(@Request() req, @Param('id') id: string) {
+    return this.comicsService.deleteWithAuth(id, req.user.sub, req.user.roles);
   }
 
   @Post(':id/chapters')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.UPLOADER, UserRole.ADMIN)
-  addChapter(@Param('id') id: string, @Body() dto: CreateChapterDto) {
-    return this.comicsService.addChapter(id, dto);
+  addChapter(@Request() req, @Param('id') id: string, @Body() dto: CreateChapterDto) {
+    return this.comicsService.addChapterWithAuth(id, dto, req.user.sub, req.user.roles);
   }
 
   @Get(':id/chapters/:chapterId')
@@ -96,22 +97,22 @@ export class ComicsController {
   @Put(':id/chapters/:index')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.UPLOADER, UserRole.ADMIN)
-  updateChapter(@Param('id') id: string, @Param('index') index: string, @Body() dto: UpdateChapterDto) {
-    return this.comicsService.updateChapter(id, +index, dto);
+  updateChapter(@Request() req, @Param('id') id: string, @Param('index') index: string, @Body() dto: UpdateChapterDto) {
+    return this.comicsService.updateChapterWithAuth(id, +index, dto, req.user.sub, req.user.roles);
   }
 
   @Patch(':id/chapters/:chapterId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.UPLOADER, UserRole.ADMIN)
-  updateChapterById(@Param('id') id: string, @Param('chapterId') chapterId: string, @Body() dto: UpdateChapterDto) {
-    return this.comicsService.updateChapterById(id, chapterId, dto);
+  updateChapterById(@Request() req, @Param('id') id: string, @Param('chapterId') chapterId: string, @Body() dto: UpdateChapterDto) {
+    return this.comicsService.updateChapterByIdWithAuth(id, chapterId, dto, req.user.sub, req.user.roles);
   }
 
   @Delete(':id/chapters/:index')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.UPLOADER, UserRole.ADMIN)
-  deleteChapter(@Param('id') id: string, @Param('index') index: string) {
-    return this.comicsService.deleteChapter(id, +index);
+  deleteChapter(@Request() req, @Param('id') id: string, @Param('index') index: string) {
+    return this.comicsService.deleteChapterWithAuth(id, +index, req.user.sub, req.user.roles);
   }
 
   @Post(':id/follow')

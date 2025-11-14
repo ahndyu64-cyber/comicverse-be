@@ -29,9 +29,7 @@ export class UsersController {
   @Put('profile')
   @UseGuards(JwtAuthGuard)
   updateProfile(@Request() req, @Body() dto: UpdateProfileDto) {
-    // delegate to auth service (AuthService.updateProfile) in controller layer normally
-    // For now usersService doesn't handle password change. Caller should use /auth/profile.
-    return this.usersService.findById(req.user.sub);
+    return this.usersService.updateProfile(req.user.sub, dto);
   }
 
   @Get(':id/following')

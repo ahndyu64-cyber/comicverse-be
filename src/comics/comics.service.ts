@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Comic, ComicDocument } from './schemas/comic.schema';
@@ -14,10 +14,13 @@ export class ComicsService {
     private cloudinaryService: CloudinaryService,
   ) {}
 
-  async create(dto: CreateComicDto) {
+  async create(dto: CreateComicDto, uploaderId?: string) {
     const slug = dto.title.toLowerCase().replace(/\s+/g, '-');
-    const created = new this.comicModel({ ...dto, slug });
-    return created.save();
+    console.log(`[CREATE-COMIC] Creating comic with uploaderId: ${uploaderId}`);
+    const created = new this.comicModel({ ...dto, slug, uploaderId });
+    const saved = await created.save();
+    console.log(`[CREATE-COMIC] Comic created with ID: ${saved._id}, uploaderId: ${saved.uploaderId}`);
+    return saved;
   }
 
   async findAll(filterDto: FilterComicsDto = {}) {
@@ -218,5 +221,113 @@ export class ComicsService {
 
   async incrementViews(id: string) {
     return this.comicModel.findByIdAndUpdate(id, { $inc: { views: 1 } }, { new: true }).exec();
+  }
+
+  private canUserModifyComic(comic: ComicDocument, userId: string, userRoles: string[]): boolean {
+    // ADMIN can do anything
+    if (userRoles && userRoles.includes('admin')) {
+      return true;
+    }
+    // UPLOADER can only modify their own comics
+    if (userRoles && userRoles.includes('uploader')) {
+      const comicUploaderId = comic.uploaderId?.toString() || '';
+      const userIdStr = String(userId);
+      console.log(`[AUTH-CHECK] Comic uploaderId: '${comicUploaderId}' | User ID: '${userIdStr}' | Match: ${comicUploaderId === userIdStr}`);
+      return comicUploaderId === userIdStr;
+    }
+    return false;
+  }
+
+  async updateWithAuth(id: string, dto: UpdateComicDto, userId: string, userRoles: string[]) {
+    console.log(`[UPDATE-AUTH] Comic ID: ${id}, User ID: ${userId}, Roles: ${JSON.stringify(userRoles)}`);
+    const comic = await this.findById(id);
+    console.log(`[UPDATE-AUTH] Comic found. Current uploaderId: '${comic.uploaderId}'`);
+    
+    // For existing comics without uploaderId, set it to the current uploader if they're trying to modify
+    if (!comic.uploaderId && userRoles.includes('uploader')) {
+      console.log(`[UPDATE-AUTH] Comic has no uploaderId, setting to current user: ${userId}`);
+      comic.uploaderId = userId;
+      await comic.save();
+    }
+    
+    if (!this.canUserModifyComic(comic, userId, userRoles)) {
+      throw new ForbiddenException('You can only edit your own comics');
+    }
+    return this.update(id, dto);
+  }
+
+  async deleteWithAuth(id: string, userId: string, userRoles: string[]) {
+    const comic = await this.findById(id);
+    
+    // For existing comics without uploaderId, set it to the current uploader if they're trying to modify
+    if (!comic.uploaderId && userRoles.includes('uploader')) {
+      comic.uploaderId = userId;
+      await comic.save();
+    }
+    
+    if (!this.canUserModifyComic(comic, userId, userRoles)) {
+      throw new ForbiddenException('You can only delete your own comics');
+    }
+    return this.delete(id);
+  }
+
+  async addChapterWithAuth(comicId: string, dto: CreateChapterDto, userId: string, userRoles: string[]) {
+    const comic = await this.findById(comicId);
+    
+    // For existing comics without uploaderId, set it to the current uploader if they're trying to modify
+    if (!comic.uploaderId && userRoles.includes('uploader')) {
+      comic.uploaderId = userId;
+      await comic.save();
+    }
+    
+    if (!this.canUserModifyComic(comic, userId, userRoles)) {
+      throw new ForbiddenException('You can only add chapters to your own comics');
+    }
+    return this.addChapter(comicId, dto);
+  }
+
+  async updateChapterWithAuth(comicId: string, chapterIndex: number, dto: UpdateChapterDto, userId: string, userRoles: string[]) {
+    const comic = await this.findById(comicId);
+    
+    // For existing comics without uploaderId, set it to the current uploader if they're trying to modify
+    if (!comic.uploaderId && userRoles.includes('uploader')) {
+      comic.uploaderId = userId;
+      await comic.save();
+    }
+    
+    if (!this.canUserModifyComic(comic, userId, userRoles)) {
+      throw new ForbiddenException('You can only edit chapters in your own comics');
+    }
+    return this.updateChapter(comicId, chapterIndex, dto);
+  }
+
+  async updateChapterByIdWithAuth(comicId: string, chapterId: string, dto: UpdateChapterDto, userId: string, userRoles: string[]) {
+    const comic = await this.findById(comicId);
+    
+    // For existing comics without uploaderId, set it to the current uploader if they're trying to modify
+    if (!comic.uploaderId && userRoles.includes('uploader')) {
+      comic.uploaderId = userId;
+      await comic.save();
+    }
+    
+    if (!this.canUserModifyComic(comic, userId, userRoles)) {
+      throw new ForbiddenException('You can only edit chapters in your own comics');
+    }
+    return this.updateChapterById(comicId, chapterId, dto);
+  }
+
+  async deleteChapterWithAuth(comicId: string, chapterIndex: number, userId: string, userRoles: string[]) {
+    const comic = await this.findById(comicId);
+    
+    // For existing comics without uploaderId, set it to the current uploader if they're trying to modify
+    if (!comic.uploaderId && userRoles.includes('uploader')) {
+      comic.uploaderId = userId;
+      await comic.save();
+    }
+    
+    if (!this.canUserModifyComic(comic, userId, userRoles)) {
+      throw new ForbiddenException('You can only delete chapters in your own comics');
+    }
+    return this.deleteChapter(comicId, chapterIndex);
   }
 }

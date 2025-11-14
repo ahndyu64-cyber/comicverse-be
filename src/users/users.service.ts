@@ -87,4 +87,29 @@ export class UsersService {
     await user.save();
     return user;
   }
+
+  async updateProfile(userId: string, updates: any) {
+    if (!Types.ObjectId.isValid(userId)) throw new NotFoundException('User not found');
+    
+    const allowedFields = ['username', 'email', 'avatar'];
+    const updateData: any = {};
+    
+    allowedFields.forEach(field => {
+      if (field in updates && updates[field] !== undefined) {
+        updateData[field] = updates[field];
+      }
+    });
+    
+    if (Object.keys(updateData).length === 0) {
+      return this.findById(userId);
+    }
+    
+    const updated = await this.userModel
+      .findByIdAndUpdate(userId, updateData, { new: true })
+      .select('-password -refreshToken')
+      .exec();
+    
+    if (!updated) throw new NotFoundException('User not found');
+    return updated;
+  }
 }
