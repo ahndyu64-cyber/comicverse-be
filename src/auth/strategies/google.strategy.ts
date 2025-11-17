@@ -9,10 +9,15 @@ import { User, UserDocument } from '../schemas/user.schema';
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private configService: ConfigService, @InjectModel(User.name) private userModel: Model<UserDocument>) {
+    const callbackURL = configService.get<string>('GOOGLE_CALLBACK_URL') || 'http://localhost:3001/auth/google/callback';
+    console.log('🔐 Google OAuth Config:', {
+      clientID: configService.get<string>('GOOGLE_CLIENT_ID'),
+      callbackURL: callbackURL,
+    });
     super({
       clientID: configService.get<string>('GOOGLE_CLIENT_ID'),
       clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET'),
-      callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL') || '/auth/google/callback',
+      callbackURL: callbackURL,
       scope: ['email', 'profile'],
       passReqToCallback: false,
     } as any);
