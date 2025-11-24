@@ -17,9 +17,42 @@ export class ComicsService {
   async create(dto: CreateComicDto, uploaderId?: string) {
     const slug = dto.title.toLowerCase().replace(/\s+/g, '-');
     console.log(`[CREATE-COMIC] Creating comic with uploaderId: ${uploaderId}`);
-    const created = new this.comicModel({ ...dto, slug, uploaderId });
+    console.log(`[CREATE-COMIC] Received authors:`, dto.authors);
+    console.log(`[CREATE-COMIC] Authors type:`, typeof dto.authors);
+    console.log(`[CREATE-COMIC] Authors is array:`, Array.isArray(dto.authors));
+    
+    // Normalize authors
+    let authors: string[] = [];
+    if (Array.isArray(dto.authors)) {
+      authors = dto.authors.filter(a => typeof a === 'string' && a.trim() !== '');
+    }
+    
+    // Normalize genres
+    let genres: string[] = [];
+    if (Array.isArray(dto.genres)) {
+      genres = dto.genres.filter(g => typeof g === 'string' && g.trim() !== '');
+    }
+    
+    console.log(`[CREATE-COMIC] Normalized authors:`, authors);
+    console.log(`[CREATE-COMIC] Normalized genres:`, genres);
+    
+    const comicData = {
+      title: dto.title,
+      slug,
+      uploaderId,
+      authors,
+      genres,
+    };
+    
+    if (dto.description) comicData['description'] = dto.description;
+    if (dto.cover) comicData['cover'] = dto.cover;
+    if (dto.coverPublicId) comicData['coverPublicId'] = dto.coverPublicId;
+    
+    const created = new this.comicModel(comicData);
     const saved = await created.save();
-    console.log(`[CREATE-COMIC] Comic created with ID: ${saved._id}, uploaderId: ${saved.uploaderId}`);
+    console.log(`[CREATE-COMIC] Comic created with ID: ${saved._id}`);
+    console.log(`[CREATE-COMIC] Saved authors: ${JSON.stringify(saved.authors)}`);
+    console.log(`[CREATE-COMIC] Saved genres: ${JSON.stringify(saved.genres)}`);
     return saved;
   }
 
@@ -103,11 +136,50 @@ export class ComicsService {
   }
 
   async update(id: string, dto: UpdateComicDto) {
-    const updates: any = { ...dto };
+    const comic = await this.findById(id);
+    console.log('[SERVICE-UPDATE] Before update - Authors:', comic.authors);
+    console.log('[SERVICE-UPDATE] DTO authors:', dto.authors);
+    
+    // Update basic fields
     if (dto.title) {
-      updates.slug = dto.title.toLowerCase().replace(/\s+/g, '-');
+      comic.title = dto.title;
+      comic.slug = dto.title.toLowerCase().replace(/\s+/g, '-');
     }
-    const updated = await this.comicModel.findByIdAndUpdate(id, updates, { new: true }).exec();
+    if (dto.description !== undefined) {
+      comic.description = dto.description;
+    }
+    if (dto.cover !== undefined) {
+      comic.cover = dto.cover;
+    }
+    if (dto.status !== undefined) {
+      comic.status = dto.status;
+    }
+    
+    // Handle authors array
+    if (dto.authors !== undefined) {
+      let authors: string[] = [];
+      if (Array.isArray(dto.authors)) {
+        authors = dto.authors.filter(a => typeof a === 'string' && a.trim() !== '');
+      }
+      console.log('[SERVICE-UPDATE] Setting authors to:', authors);
+      comic.authors = authors;
+      comic.markModified('authors');
+    }
+    
+    // Handle genres array
+    if (dto.genres !== undefined) {
+      let genres: string[] = [];
+      if (Array.isArray(dto.genres)) {
+        genres = dto.genres.filter(g => typeof g === 'string' && g.trim() !== '');
+      }
+      console.log('[SERVICE-UPDATE] Setting genres to:', genres);
+      comic.genres = genres;
+      comic.markModified('genres');
+    }
+    
+    console.log('[SERVICE-UPDATE] Before save - Authors:', comic.authors);
+    const updated = await comic.save();
+    console.log('[SERVICE-UPDATE] After save - Authors:', updated.authors);
     if (!updated) throw new NotFoundException('Comic not found');
     return updated;
   }

@@ -43,3 +43,13 @@ export class Comic {
 export type ComicDocument = Comic & Document;
 export const ComicSchema = SchemaFactory.createForClass(Comic);
 
+// Middleware để đảm bảo authors luôn được lưu
+ComicSchema.pre('save', function(next) {
+  if (!this.authors) {
+    this.authors = [];
+  }
+  if (!Array.isArray(this.authors)) {
+    this.authors = [];
+  }
+  next();
+});

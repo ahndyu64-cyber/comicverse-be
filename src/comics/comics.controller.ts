@@ -64,6 +64,10 @@ export class ComicsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.UPLOADER, UserRole.ADMIN)
   create(@Request() req, @Body() dto: CreateComicDto) {
+    console.log('[CONTROLLER-CREATE] Received DTO:', JSON.stringify(dto));
+    console.log('[CONTROLLER-CREATE] Authors:', dto.authors);
+    console.log('[CONTROLLER-CREATE] Authors type:', typeof dto.authors);
+    console.log('[CONTROLLER-CREATE] Authors is array:', Array.isArray(dto.authors));
     return this.comicsService.create(dto, req.user.sub);
   }
 
@@ -71,7 +75,23 @@ export class ComicsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.UPLOADER, UserRole.ADMIN)
   update(@Request() req, @Param('id') id: string, @Body() dto: UpdateComicDto) {
+    console.log('[CONTROLLER-UPDATE] Received DTO:', JSON.stringify(dto));
+    console.log('[CONTROLLER-UPDATE] Authors:', dto.authors);
+    console.log('[CONTROLLER-UPDATE] Authors type:', typeof dto.authors);
+    console.log('[CONTROLLER-UPDATE] Authors is array:', Array.isArray(dto.authors));
     console.log('Update comic - User:', req.user);
+    return this.comicsService.updateWithAuth(id, dto, req.user.sub, req.user.roles);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.UPLOADER, UserRole.ADMIN)
+  patch(@Request() req, @Param('id') id: string, @Body() dto: UpdateComicDto) {
+    console.log('[CONTROLLER-PATCH] Received DTO:', JSON.stringify(dto));
+    console.log('[CONTROLLER-PATCH] Authors:', dto.authors);
+    console.log('[CONTROLLER-PATCH] Authors type:', typeof dto.authors);
+    console.log('[CONTROLLER-PATCH] Authors is array:', Array.isArray(dto.authors));
+    console.log('Patch comic - User:', req.user);
     return this.comicsService.updateWithAuth(id, dto, req.user.sub, req.user.roles);
   }
 

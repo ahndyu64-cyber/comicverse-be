@@ -48,13 +48,11 @@ export class UpdateComicDto {
 
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  authors?: string[];
+  authors?: any;
 
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  genres?: string[];
+  genres?: any;
 
   @IsOptional()
   @IsEnum(['ongoing', 'completed', 'dropped'])

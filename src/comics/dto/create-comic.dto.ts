@@ -18,12 +18,9 @@ export class CreateComicDto {
 
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  authors?: string[];
+  authors?: any;
 
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  genres?: string[];
+  genres?: any;
 }
-
