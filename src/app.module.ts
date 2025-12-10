@@ -12,6 +12,7 @@ import { UploadModule } from './upload/upload.module';
 import { ChaptersModule } from './chapters/chapters.module';
 import { PingModule } from './ping/ping.module';
 import { AdminModule } from './admin/admin.module';
+import { BannersModule } from './banners/banners.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { AdminModule } from './admin/admin.module';
     ChaptersModule,
     PingModule,
     AdminModule,
+    BannersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

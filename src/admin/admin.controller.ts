@@ -1,9 +1,10 @@
-import { Controller, Get, Param, Query, Patch, Body, Delete, UseGuards, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Param, Query, Patch, Body, Delete, UseGuards, BadRequestException, NotFoundException, Post } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/schemas/user.schema';
+import { CreateBannerDto, UpdateBannerDto } from '../banners/dto/banner.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -86,5 +87,36 @@ export class AdminController {
   @Delete('comics/:id')
   async deleteComic(@Param('id') id: string) {
     return this.adminService.deleteComic(id);
+  }
+
+  // Banners
+  @Get('banners')
+  async listBanners(@Query() query: any) {
+    return this.adminService.listBanners(query);
+  }
+
+  @Get('banners/:id')
+  async getBanner(@Param('id') id: string) {
+    return this.adminService.getBanner(id);
+  }
+
+  @Post('banners')
+  async createBanner(@Body() dto: CreateBannerDto) {
+    return this.adminService.createBanner(dto);
+  }
+
+  @Patch('banners/:id')
+  async updateBanner(@Param('id') id: string, @Body() dto: UpdateBannerDto) {
+    return this.adminService.updateBanner(id, dto);
+  }
+
+  @Patch('banners/:id/order')
+  async updateBannerOrder(@Param('id') id: string, @Body('order') order: number) {
+    return this.adminService.updateBannerOrder(id, order);
+  }
+
+  @Delete('banners/:id')
+  async deleteBanner(@Param('id') id: string) {
+    return this.adminService.deleteBanner(id);
   }
 }

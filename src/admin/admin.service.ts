@@ -1,12 +1,18 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { ComicsService } from '../comics/comics.service';
+import { BannersService } from '../banners/banners.service';
 import { FilterComicsDto, UpdateComicDto } from '../comics/dto/filter-comics.dto';
+import { FilterBannersDto, CreateBannerDto, UpdateBannerDto } from '../banners/dto/banner.dto';
 import { UserRole } from '../auth/schemas/user.schema';
 
 @Injectable()
 export class AdminService {
-  constructor(private usersService: UsersService, private comicsService: ComicsService) {}
+  constructor(
+    private usersService: UsersService,
+    private comicsService: ComicsService,
+    private bannersService: BannersService,
+  ) {}
 
   // Users
   async listUsers(query: any = {}) {
@@ -66,5 +72,30 @@ export class AdminService {
 
   async deleteComic(id: string) {
     return this.comicsService.delete(id);
+  }
+
+  // Banners
+  async listBanners(filter: FilterBannersDto = {}) {
+    return this.bannersService.findAll(filter);
+  }
+
+  async getBanner(id: string) {
+    return this.bannersService.findById(id);
+  }
+
+  async createBanner(dto: CreateBannerDto) {
+    return this.bannersService.create(dto);
+  }
+
+  async updateBanner(id: string, dto: UpdateBannerDto) {
+    return this.bannersService.update(id, dto);
+  }
+
+  async deleteBanner(id: string) {
+    return this.bannersService.delete(id);
+  }
+
+  async updateBannerOrder(id: string, order: number) {
+    return this.bannersService.updateOrder(id, order);
   }
 }
