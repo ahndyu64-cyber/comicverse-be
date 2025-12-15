@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Comment, CommentDocument } from './schemas/comment.schema';
 import { CreateCommentDto, UpdateCommentDto } from './dto/comment.dto';
+import { UserRole } from '../auth/schemas/user.schema';
 
 @Injectable()
 export class CommentsService {
@@ -57,10 +58,18 @@ export class CommentsService {
     return comment.save();
   }
 
-  async remove(userId: string, commentId: string) {
+  async remove(userId: string, commentId: string, roles?: UserRole[]) {
     const comment = await this.commentModel.findById(commentId).exec();
     if (!comment) throw new NotFoundException('Comment not found');
-    if (comment.user.toString() !== userId) throw new ForbiddenException('Not allowed');
+    
+    // Allow deletion if user is owner or admin
+    const isOwner = comment.user.toString() === userId;
+    const isAdmin = roles && Array.isArray(roles) && roles.includes(UserRole.ADMIN);
+    
+    console.log(`[DELETE COMMENT] userId: ${userId}, isOwner: ${isOwner}, roles: ${JSON.stringify(roles)}, isAdmin: ${isAdmin}`);
+    
+    if (!isOwner && !isAdmin) throw new ForbiddenException('Not allowed');
+    
     return this.commentModel.findByIdAndDelete(commentId).exec();
   }
 

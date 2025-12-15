@@ -2,6 +2,9 @@ import { Controller, Get, Post, Put, Delete, Query, Body, Param, UseGuards, Requ
 import { CommentsService } from './comments.service';
 import { CreateCommentDto, UpdateCommentDto } from './dto/comment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../auth/schemas/user.schema';
 
 @Controller('comments')
 export class CommentsFlatController {
@@ -36,8 +39,10 @@ export class CommentsFlatController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.USER, UserRole.ADMIN)
   remove(@Request() req, @Param('id') id: string) {
-    return this.commentsService.remove(req.user.sub, id);
+    const roles = Array.isArray(req.user.roles) ? req.user.roles : [req.user.roles];
+    return this.commentsService.remove(req.user.sub, id, roles);
   }
 }

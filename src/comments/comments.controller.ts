@@ -2,6 +2,9 @@ import { Controller, Post, Body, UseGuards, Request, Param, Get, Query, Put, Del
 import { CommentsService } from './comments.service';
 import { CreateCommentDto, UpdateCommentDto } from './dto/comment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../auth/schemas/user.schema';
 
 @Controller('comics/:comicId/comments')
 export class CommentsController {
@@ -27,8 +30,12 @@ export class CommentsController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.USER, UserRole.ADMIN)
   remove(@Request() req, @Param('comicId') comicId: string, @Param('id') id: string) {
-    return this.commentsService.remove(req.user.sub, id);
+    console.log(`[DELETE ENDPOINT] req.user: ${JSON.stringify(req.user)}`);
+    const roles = Array.isArray(req.user.roles) ? req.user.roles : [req.user.roles];
+    console.log(`[DELETE ENDPOINT] roles after conversion: ${JSON.stringify(roles)}`);
+    return this.commentsService.remove(req.user.sub, id, roles);
   }
 }
