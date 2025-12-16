@@ -2,10 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument, UserRole } from '../auth/schemas/user.schema';
+import { Comic, ComicDocument } from '../comics/schemas/comic.schema';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Comic.name) private comicModel: Model<ComicDocument>,
+  ) {}
 
   async findAll(page = 1, limit = 20) {
     const skip = (page - 1) * limit;
@@ -35,6 +39,13 @@ export class UsersService {
     if (!user.followingComics.find((c: Types.ObjectId) => c.toString() === oid.toString())) {
       user.followingComics.push(oid as any);
       await user.save();
+      
+      // Update comic's followersCount
+      const comic = await this.comicModel.findById(comicId).exec();
+      if (comic) {
+        comic.followersCount = (comic.followersCount || 0) + 1;
+        await comic.save();
+      }
     }
     return { message: 'Followed' };
   }
@@ -42,8 +53,21 @@ export class UsersService {
   async unfollow(userId: string, comicId: string) {
     const user = await this.userModel.findById(userId).exec();
     if (!user) throw new NotFoundException('User not found');
+    const initialLength = (user.followingComics || []).length;
     user.followingComics = (user.followingComics || []).filter((c: Types.ObjectId) => c.toString() !== comicId);
-    await user.save();
+    const finalLength = user.followingComics.length;
+    
+    // Only update if the comic was actually being followed
+    if (initialLength > finalLength) {
+      await user.save();
+      
+      // Update comic's followersCount (prevent negative counts)
+      const comic = await this.comicModel.findById(comicId).exec();
+      if (comic) {
+        comic.followersCount = Math.max(0, (comic.followersCount || 0) - 1);
+        await comic.save();
+      }
+    }
     return { message: 'Unfollowed' };
   }
 
@@ -60,7 +84,8 @@ export class UsersService {
   async getFollowing(userId: string) {
     const user = await this.userModel.findById(userId).populate('followingComics').select('followingComics').exec();
     if (!user) throw new NotFoundException('User not found');
-    return user.followingComics;
+    // Return in reverse order so newest follows are first
+    return user.followingComics ? [...user.followingComics].reverse() : [];
   }
 
   async setProgress(userId: string, comicId: string, progress: string) {
@@ -118,5 +143,37 @@ export class UsersService {
     const result = await this.userModel.findByIdAndDelete(id).exec();
     if (!result) throw new NotFoundException('User not found');
     return { message: 'deleted' };
+  }
+
+  async cleanupFollowingComics(userId: string) {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) throw new NotFoundException('User not found');
+    
+    if (!user.followingComics || user.followingComics.length === 0) {
+      return { cleaned: 0 };
+    }
+
+    // Check which comics actually exist
+    const followingComicIds = user.followingComics.map(id => new Types.ObjectId(id.toString()));
+    const existingComics = await this.comicModel
+      .find({ _id: { $in: followingComicIds } })
+      .select('_id')
+      .exec();
+    
+    const existingComicIds = new Set(existingComics.map(c => c._id.toString()));
+    
+    // Remove comics that don't exist
+    const validFollowingComics = user.followingComics.filter(
+      (comicId) => existingComicIds.has(comicId.toString())
+    );
+    
+    const removedCount = user.followingComics.length - validFollowingComics.length;
+    
+    if (removedCount > 0) {
+      user.followingComics = validFollowingComics;
+      await user.save();
+    }
+    
+    return { cleaned: removedCount };
   }
 }

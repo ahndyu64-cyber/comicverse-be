@@ -158,4 +158,9 @@ export class ComicsController {
   incrementViews(@Param('id') id: string) {
     return this.comicsService.incrementViews(id);
   }
+
+  @Get(':id/followers-count')
+  getFollowersCount(@Param('id') id: string) {
+    return this.comicsService.getFollowersCount(id);
+  }
 }

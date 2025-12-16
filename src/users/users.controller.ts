@@ -1,6 +1,8 @@
-import { Controller, Get, Param, UseGuards, Request, Put, Body, Query } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, Request, Put, Body, Query, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { UpdateProfileDto } from '../auth/dto/auth.dto';
 import { UserRole } from '../auth/schemas/user.schema';
 
@@ -45,5 +47,12 @@ export class UsersController {
   @Get('setup-admin/:id')
   async setupAdmin(@Param('id') id: string) {
     return this.usersService.setRoles(id, [UserRole.ADMIN]);
+  }
+
+  @Post(':id/cleanup-following')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  cleanupFollowingComics(@Param('id') id: string) {
+    return this.usersService.cleanupFollowingComics(id);
   }
 }

@@ -38,6 +38,9 @@ export class Comic {
 
   @Prop({ default: 0 })
   views: number;
+
+  @Prop({ default: 0 })
+  followersCount: number;
 }
 
 export type ComicDocument = Comic & Document;

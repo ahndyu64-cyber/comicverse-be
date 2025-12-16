@@ -91,11 +91,17 @@ export class ComicsService {
         case 'views':
           sort.views = order === 'desc' ? -1 : 1;
           break;
+        case 'followers':
+          sort.followersCount = order === 'desc' ? -1 : 1;
+          break;
         case 'title':
           sort.title = order === 'desc' ? -1 : 1;
           break;
+        case 'latest':
         default:
-          sort.updatedAt = order === 'desc' ? -1 : 1;
+          // Sort by createdAt instead of updatedAt to maintain stable ordering
+          // This prevents the list from changing when users follow/unfollow
+          sort.createdAt = order === 'desc' ? -1 : 1;
       }
 
       const [items, total] = await Promise.all([
@@ -114,7 +120,7 @@ export class ComicsService {
   }
 
   async findHotComics(limit = 10) {
-    return this.comicModel.find().sort({ views: -1 }).limit(limit).exec();
+    return this.comicModel.find().sort({ followersCount: -1, views: -1 }).limit(limit).exec();
   }
 
   async findLatestUpdates(limit = 20) {
@@ -401,5 +407,13 @@ export class ComicsService {
       throw new ForbiddenException('You can only delete chapters in your own comics');
     }
     return this.deleteChapter(comicId, chapterIndex);
+  }
+
+  async getFollowersCount(comicId: string) {
+    const comic = await this.comicModel.findById(comicId).exec();
+    if (!comic) {
+      throw new NotFoundException(`Comic with ID ${comicId} not found`);
+    }
+    return { followersCount: comic.followersCount || 0 };
   }
 }
