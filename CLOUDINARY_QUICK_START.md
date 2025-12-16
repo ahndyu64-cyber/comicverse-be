@@ -3,7 +3,6 @@
 ## 1. Thiết lập Cloudinary
 
 ```bash
-# Copy .env.example sang .env (nếu chưa có)
 cp .env.example .env
 ```
 
