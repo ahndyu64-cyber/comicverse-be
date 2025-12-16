@@ -97,11 +97,14 @@ export class ComicsService {
         case 'title':
           sort.title = order === 'desc' ? -1 : 1;
           break;
+        case 'new':
+          // Sort by updatedAt for newly updated comics
+          sort.updatedAt = order === 'desc' ? -1 : 1;
+          break;
         case 'latest':
         default:
-          // Sort by createdAt instead of updatedAt to maintain stable ordering
-          // This prevents the list from changing when users follow/unfollow
-          sort.createdAt = order === 'desc' ? -1 : 1;
+          // Sort by updatedAt in descending order by default (newest updates first)
+          sort.updatedAt = order === 'desc' ? -1 : 1;
       }
 
       const [items, total] = await Promise.all([

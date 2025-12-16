@@ -15,7 +15,7 @@ export class FilterComicsDto {
   search?: string;
 
   @IsOptional()
-  @IsEnum(['views', 'latest', 'title'])
+  @IsEnum(['views', 'latest', 'new', 'title'])
   sortBy?: string;
 
   @IsOptional()
