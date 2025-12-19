@@ -40,12 +40,12 @@ export class UsersService {
       user.followingComics.push(oid as any);
       await user.save();
       
-      // Update comic's followersCount
-      const comic = await this.comicModel.findById(comicId).exec();
-      if (comic) {
-        comic.followersCount = (comic.followersCount || 0) + 1;
-        await comic.save();
-      }
+      // Update comic's followersCount without triggering updatedAt timestamp
+      await this.comicModel.updateOne(
+        { _id: new Types.ObjectId(comicId) },
+        { $inc: { followersCount: 1 } },
+        { timestamps: false }
+      ).exec();
     }
     return { message: 'Followed' };
   }
@@ -61,12 +61,11 @@ export class UsersService {
     if (initialLength > finalLength) {
       await user.save();
       
-      // Update comic's followersCount (prevent negative counts)
-      const comic = await this.comicModel.findById(comicId).exec();
-      if (comic) {
-        comic.followersCount = Math.max(0, (comic.followersCount || 0) - 1);
-        await comic.save();
-      }
+      // Update comic's followersCount without triggering updatedAt timestamp
+      await this.comicModel.updateOne(
+        { _id: new Types.ObjectId(comicId), followersCount: { $gt: 0 } },
+        { $inc: { followersCount: -1 } }
+      ).exec();
     }
     return { message: 'Unfollowed' };
   }
