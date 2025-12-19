@@ -41,11 +41,11 @@ export class UsersService {
       await user.save();
       
       // Update comic's followersCount without triggering updatedAt timestamp
-      await this.comicModel.updateOne(
+      // Use raw collection to bypass Mongoose timestamp middleware
+      await this.comicModel.collection.updateOne(
         { _id: new Types.ObjectId(comicId) },
-        { $inc: { followersCount: 1 } },
-        { timestamps: false }
-      ).exec();
+        { $inc: { followersCount: 1 } }
+      );
     }
     return { message: 'Followed' };
   }
@@ -62,10 +62,11 @@ export class UsersService {
       await user.save();
       
       // Update comic's followersCount without triggering updatedAt timestamp
-      await this.comicModel.updateOne(
+      // Use raw collection to bypass Mongoose timestamp middleware
+      await this.comicModel.collection.updateOne(
         { _id: new Types.ObjectId(comicId), followersCount: { $gt: 0 } },
         { $inc: { followersCount: -1 } }
-      ).exec();
+      );
     }
     return { message: 'Unfollowed' };
   }
