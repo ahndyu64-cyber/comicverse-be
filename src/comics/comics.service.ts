@@ -89,12 +89,14 @@ export class ComicsService {
       const sort: any = {};
       switch (sortBy) {
         case 'views':
+        case 'popular':
           sort.views = order === 'desc' ? -1 : 1;
           break;
         case 'followers':
           sort.followersCount = order === 'desc' ? -1 : 1;
           break;
         case 'title':
+        case 'alpha':
           sort.title = order === 'desc' ? -1 : 1;
           break;
         case 'new':
