@@ -255,10 +255,64 @@ export class ComicsService {
       (chapter as any).slug = dto.title.toLowerCase().replace(/\s+/g, '-');
     }
     if (dto.images !== undefined) {
+      // Delete removed images from Cloudinary
+      const oldImages = (chapter as any).images || [];
+      const newImages = dto.images || [];
+      const removedImages = oldImages.filter((img: string) => !newImages.includes(img));
+      
+      if (removedImages.length > 0 && (chapter as any).imagePublicIds) {
+        // Find corresponding public IDs for removed images
+        const publicIdsToDelete: string[] = [];
+        removedImages.forEach((removedImg: string) => {
+          const index = oldImages.indexOf(removedImg);
+          if (index !== -1 && (chapter as any).imagePublicIds[index]) {
+            publicIdsToDelete.push((chapter as any).imagePublicIds[index]);
+          }
+        });
+        
+        // Delete from Cloudinary
+        if (publicIdsToDelete.length > 0) {
+          try {
+            await this.cloudinaryService.deleteMultipleImages(publicIdsToDelete);
+          } catch (error) {
+            console.error('Error deleting images from Cloudinary:', error);
+            // Continue with saving the chapter even if Cloudinary deletion fails
+          }
+        }
+        
+        // Update imagePublicIds array to match new images array
+        const newPublicIds = (chapter as any).imagePublicIds.filter((_: string, index: number) => {
+          return index < newImages.length && oldImages[index] && newImages.includes(oldImages[index]);
+        });
+        (chapter as any).imagePublicIds = newPublicIds;
+      }
+      
       (chapter as any).images = dto.images;
     }
     comic.markModified('chapters');
-    return comic.save();
+    try {
+      return await comic.save();
+    } catch (error: any) {
+      // Handle version errors from concurrent updates
+      if (error.name === 'VersionError') {
+        console.error('Version conflict detected, retrying...', error);
+        // Retry with fresh data
+        const freshComic = await this.findById(comicId);
+        if (chapterIndex < freshComic.chapters.length) {
+          const freshChapter = freshComic.chapters[chapterIndex];
+          if (dto.title) {
+            (freshChapter as any).title = dto.title;
+            (freshChapter as any).slug = dto.title.toLowerCase().replace(/\s+/g, '-');
+          }
+          if (dto.images !== undefined) {
+            (freshChapter as any).images = dto.images;
+          }
+          freshComic.markModified('chapters');
+          return await freshComic.save();
+        }
+      }
+      throw error;
+    }
   }
 
   async updateChapterById(comicId: string, chapterId: string, dto: UpdateChapterDto) {
@@ -280,10 +334,65 @@ export class ComicsService {
       (chapter as any).slug = dto.title.toLowerCase().replace(/\s+/g, '-');
     }
     if (dto.images !== undefined) {
+      // Delete removed images from Cloudinary
+      const oldImages = (chapter as any).images || [];
+      const newImages = dto.images || [];
+      const removedImages = oldImages.filter((img: string) => !newImages.includes(img));
+      
+      if (removedImages.length > 0 && (chapter as any).imagePublicIds) {
+        // Find corresponding public IDs for removed images
+        const publicIdsToDelete: string[] = [];
+        removedImages.forEach((removedImg: string) => {
+          const index = oldImages.indexOf(removedImg);
+          if (index !== -1 && (chapter as any).imagePublicIds[index]) {
+            publicIdsToDelete.push((chapter as any).imagePublicIds[index]);
+          }
+        });
+        
+        // Delete from Cloudinary
+        if (publicIdsToDelete.length > 0) {
+          try {
+            await this.cloudinaryService.deleteMultipleImages(publicIdsToDelete);
+          } catch (error) {
+            console.error('Error deleting images from Cloudinary:', error);
+            // Continue with saving the chapter even if Cloudinary deletion fails
+          }
+        }
+        
+        // Update imagePublicIds array to match new images array
+        const newPublicIds = (chapter as any).imagePublicIds.filter((_: string, index: number) => {
+          return index < newImages.length && oldImages[index] && newImages.includes(oldImages[index]);
+        });
+        (chapter as any).imagePublicIds = newPublicIds;
+      }
+      
       (chapter as any).images = dto.images;
     }
     comic.markModified('chapters');
-    return comic.save();
+    try {
+      return await comic.save();
+    } catch (error: any) {
+      // Handle version errors from concurrent updates
+      if (error.name === 'VersionError') {
+        console.error('Version conflict detected, retrying...', error);
+        // Retry with fresh data
+        const freshComic = await this.findById(comicId);
+        const freshChapterIndex = freshComic.chapters.findIndex((ch) => ch._id?.toString() === chapterId);
+        if (freshChapterIndex !== -1) {
+          const freshChapter = freshComic.chapters[freshChapterIndex];
+          if (dto.title) {
+            (freshChapter as any).title = dto.title;
+            (freshChapter as any).slug = dto.title.toLowerCase().replace(/\s+/g, '-');
+          }
+          if (dto.images !== undefined) {
+            (freshChapter as any).images = dto.images;
+          }
+          freshComic.markModified('chapters');
+          return await freshComic.save();
+        }
+      }
+      throw error;
+    }
   }
 
   async deleteChapter(comicId: string, chapterIndex: number) {
@@ -295,7 +404,12 @@ export class ComicsService {
     // Delete chapter images from Cloudinary
     const chapter = comic.chapters[chapterIndex];
     if (chapter && (chapter as any).imagePublicIds && (chapter as any).imagePublicIds.length > 0) {
-      await this.cloudinaryService.deleteMultipleImages((chapter as any).imagePublicIds);
+      try {
+        await this.cloudinaryService.deleteMultipleImages((chapter as any).imagePublicIds);
+      } catch (error) {
+        console.error('Error deleting chapter images from Cloudinary:', error);
+        // Continue with deletion even if Cloudinary deletion fails
+      }
     }
     
     comic.chapters.splice(chapterIndex, 1);
