@@ -417,7 +417,11 @@ export class ComicsService {
   }
 
   async incrementViews(id: string) {
-    return this.comicModel.findByIdAndUpdate(id, { $inc: { views: 1 } }, { new: true }).exec();
+    return this.comicModel.findByIdAndUpdate(
+      id,
+      { $inc: { views: 1 } },
+      { new: true, timestamps: false }
+    ).exec();
   }
 
   private canUserModifyComic(comic: ComicDocument, userId: string, userRoles: string[]): boolean {
