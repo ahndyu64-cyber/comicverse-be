@@ -128,11 +128,11 @@ export class ComicsController {
     return this.comicsService.updateChapterByIdWithAuth(id, chapterId, dto, req.user.sub, req.user.roles);
   }
 
-  @Delete(':id/chapters/:index')
+  @Delete(':id/chapters/:chapterId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.UPLOADER, UserRole.ADMIN)
-  deleteChapter(@Request() req, @Param('id') id: string, @Param('index') index: string) {
-    return this.comicsService.deleteChapterWithAuth(id, +index, req.user.sub, req.user.roles);
+  deleteChapter(@Request() req, @Param('id') id: string, @Param('chapterId') chapterId: string) {
+    return this.comicsService.deleteChapterByIdWithAuth(id, chapterId, req.user.sub, req.user.roles);
   }
 
   @Post(':id/follow')

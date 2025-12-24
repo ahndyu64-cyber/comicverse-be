@@ -416,6 +416,33 @@ export class ComicsService {
     return comic.save();
   }
 
+  async deleteChapterById(comicId: string, chapterId: string) {
+    if (!Types.ObjectId.isValid(comicId)) throw new NotFoundException('Comic not found');
+    if (!Types.ObjectId.isValid(chapterId)) throw new NotFoundException('Chapter not found');
+    
+    const comic = await this.findById(comicId);
+    
+    // Find chapter by ID instead of using index
+    const chapterIndex = comic.chapters.findIndex(ch => ch._id && ch._id.toString() === chapterId);
+    if (chapterIndex === -1) {
+      throw new NotFoundException('Chapter not found');
+    }
+    
+    // Delete chapter images from Cloudinary
+    const chapter = comic.chapters[chapterIndex];
+    if (chapter && (chapter as any).imagePublicIds && (chapter as any).imagePublicIds.length > 0) {
+      try {
+        await this.cloudinaryService.deleteMultipleImages((chapter as any).imagePublicIds);
+      } catch (error) {
+        console.error('Error deleting chapter images from Cloudinary:', error);
+        // Continue with deletion even if Cloudinary deletion fails
+      }
+    }
+    
+    comic.chapters.splice(chapterIndex, 1);
+    return comic.save();
+  }
+
   async incrementViews(id: string) {
     return this.comicModel.findByIdAndUpdate(
       id,
@@ -530,6 +557,21 @@ export class ComicsService {
       throw new ForbiddenException('You can only delete chapters in your own comics');
     }
     return this.deleteChapter(comicId, chapterIndex);
+  }
+
+  async deleteChapterByIdWithAuth(comicId: string, chapterId: string, userId: string, userRoles: string[]) {
+    const comic = await this.findById(comicId);
+    
+    // For existing comics without uploaderId, set it to the current uploader if they're trying to modify
+    if (!comic.uploaderId && userRoles.includes('uploader')) {
+      comic.uploaderId = userId;
+      await comic.save();
+    }
+    
+    if (!this.canUserModifyComic(comic, userId, userRoles)) {
+      throw new ForbiddenException('You can only delete chapters in your own comics');
+    }
+    return this.deleteChapterById(comicId, chapterId);
   }
 
   async getFollowersCount(comicId: string) {
