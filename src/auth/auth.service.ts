@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from './schemas/user.schema';
 import { LoginDto, RegisterDto, ForgotPasswordDto, ResetPasswordDto, UpdateProfileDto } from './dto/auth.dto';
 import { ConfigService } from '@nestjs/config';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -13,6 +14,7 @@ export class AuthService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private emailService: EmailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -80,8 +82,23 @@ export class AuthService {
     user.resetPasswordExpires = expires;
     await user.save();
 
-    // TODO: Send email with reset token
-    return { message: 'Password reset instructions sent to email' };
+    // Send email with reset token
+    try {
+      await this.emailService.sendPasswordResetEmail(
+        user.email,
+        token,
+        user.username,
+      );
+    } catch (error) {
+      console.error('Failed to send password reset email:', error);
+      // Don't throw error to user, just log it
+      // In production, you might want to retry or use a queue
+    }
+
+    return { 
+      message: 'Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn',
+      email: user.email,
+    };
   }
 
   async resetPassword(dto: ResetPasswordDto) {
