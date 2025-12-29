@@ -5,7 +5,7 @@ export class LoginDto {
   email: string;
 
   @IsString()
-  @MinLength(6)
+  @MinLength(4)
   password: string;
 }
 
@@ -18,11 +18,11 @@ export class RegisterDto {
   email: string;
 
   @IsString()
-  @MinLength(6)
+  @MinLength(4)
   password: string;
 
   @IsString()
-  @MinLength(6)
+  @MinLength(4)
   confirmPassword: string;
 }
 
@@ -33,11 +33,11 @@ export class ForgotPasswordDto {
 
 export class ResetPasswordDto {
   @IsString()
-  @MinLength(6)
+  @MinLength(4)
   password: string;
 
   @IsString()
-  @MinLength(6)
+  @MinLength(4)
   confirmPassword: string;
 
   @IsString()
@@ -56,11 +56,11 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(6)
+  @MinLength(4)
   currentPassword?: string;
 
   @IsOptional()
   @IsString()
-  @MinLength(6)
+  @MinLength(4)
   newPassword?: string;
 }

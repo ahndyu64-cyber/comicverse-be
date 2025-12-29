@@ -24,8 +24,6 @@ export class EmailService {
     resetToken: string,
     username?: string,
   ): Promise<void> {
-    const resetLink = `${this.configService.get<string>('CLIENT_URL')}/reset-password?token=${resetToken}`;
-
     const htmlContent = `
       <html>
         <head>
@@ -34,7 +32,8 @@ export class EmailService {
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { background-color: #007bff; color: white; padding: 20px; text-align: center; border-radius: 5px; }
             .content { margin: 20px 0; line-height: 1.6; color: #333; }
-            .reset-button { display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+            .code-box { background-color: #f5f5f5; border: 2px dashed #007bff; padding: 20px; text-align: center; border-radius: 5px; margin: 20px 0; }
+            .code-text { font-size: 32px; font-weight: bold; color: #007bff; letter-spacing: 5px; font-family: monospace; }
             .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
           </style>
         </head>
@@ -45,11 +44,14 @@ export class EmailService {
             </div>
             <div class="content">
               <p>Xin chào ${username || 'Người dùng'},</p>
-              <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng nhấp vào nút dưới đây để tiếp tục:</p>
-              <a href="${resetLink}" class="reset-button">Đặt Lại Mật Khẩu</a>
-              <p>Hoặc sao chép và dán đường link này vào trình duyệt của bạn:</p>
-              <p><small>${resetLink}</small></p>
-              <p><strong>Lưu ý:</strong> Liên kết này sẽ hết hạn trong 1 giờ.</p>
+              <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Sử dụng mã xác thực dưới đây để tiếp tục:</p>
+              
+              <div class="code-box">
+                <div class="code-text">${resetToken}</div>
+              </div>
+              
+              <p>Vui lòng nhập mã này vào ứng dụng để xác thực yêu cầu của bạn.</p>
+              <p><strong>Lưu ý:</strong> Mã này sẽ hết hạn trong 1 giờ.</p>
               <p>Nếu bạn không yêu cầu điều này, vui lòng bỏ qua email này.</p>
             </div>
             <div class="footer">
@@ -61,16 +63,18 @@ export class EmailService {
     `;
 
     try {
-      await this.transporter.sendMail({
+      console.log('📧 Sending password reset email to:', email);
+      const response = await this.transporter.sendMail({
         from: this.configService.get<string>('SMTP_FROM'),
         to: email,
         subject: 'Đặt Lại Mật Khẩu - Comicverse',
         html: htmlContent,
-        text: `Xin chào ${username || 'Người dùng'},\n\nVui lòng nhấp vào liên kết dưới đây để đặt lại mật khẩu của bạn:\n${resetLink}\n\nLiên kết này sẽ hết hạn trong 1 giờ.\n\nNếu bạn không yêu cầu điều này, vui lòng bỏ qua email này.`,
+        text: `Xin chào ${username || 'Người dùng'},\n\nMã xác thực của bạn: ${resetToken}\n\nVui lòng nhập mã này để đặt lại mật khẩu.\n\nMã này sẽ hết hạn trong 1 giờ.\n\nNếu bạn không yêu cầu điều này, vui lòng bỏ qua email này.`,
       });
+      console.log('✅ Email sent successfully:', response);
     } catch (error) {
-      console.error('Error sending email:', error);
-      throw new Error('Failed to send password reset email');
+      console.error('❌ Error sending email:', error);
+      throw new Error(`Failed to send password reset email: ${error.message}`);
     }
   }
 
@@ -111,16 +115,18 @@ export class EmailService {
     `;
 
     try {
-      await this.transporter.sendMail({
+      console.log('📧 Sending welcome email to:', email);
+      const response = await this.transporter.sendMail({
         from: this.configService.get<string>('SMTP_FROM'),
         to: email,
         subject: 'Chào Mừng Đến Comicverse',
         html: htmlContent,
         text: `Xin chào ${username || 'Người dùng'},\n\nCảm ơn bạn đã đăng ký tài khoản trên Comicverse!`,
       });
+      console.log('✅ Welcome email sent successfully:', response);
     } catch (error) {
-      console.error('Error sending welcome email:', error);
-      throw new Error('Failed to send welcome email');
+      console.error('❌ Error sending welcome email:', error);
+      throw new Error(`Failed to send welcome email: ${error.message}`);
     }
   }
 }

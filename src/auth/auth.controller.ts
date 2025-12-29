@@ -74,14 +74,35 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Request() req: any, @Res() res: Response) {
-    // req.user is set by GoogleStrategy validate -> user document
-    const result = await this.authService.handleOAuthLogin(req.user);
-    // Redirect to frontend client with tokens (client should handle storing tokens)
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
-    const redirectPath = '/auth/callback';
-    const redirectUrl = `${clientUrl.replace(/\/$/, '')}${redirectPath}?accessToken=${encodeURIComponent(
-      result.accessToken,
-    )}&refreshToken=${encodeURIComponent(result.refreshToken)}`;
-    return res.redirect(redirectUrl);
+    try {
+      // req.user is set by GoogleStrategy validate -> user document
+      if (!req.user) {
+        const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+        return res.redirect(`${clientUrl}/login?error=google_auth_failed`);
+      }
+
+      const result = await this.authService.handleOAuthLogin(req.user);
+      // Redirect to frontend client with tokens + user data in URL params
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      const redirectPath = '/auth/callback';
+      
+      // Encode user data as JSON in query param
+      const userData = JSON.stringify({
+        id: result.user.id,
+        username: result.user.username,
+        email: result.user.email,
+        roles: result.user.roles,
+      });
+
+      const redirectUrl = `${clientUrl.replace(/\/$/, '')}${redirectPath}?accessToken=${encodeURIComponent(
+        result.accessToken,
+      )}&refreshToken=${encodeURIComponent(result.refreshToken)}&user=${encodeURIComponent(userData)}`;
+      
+      return res.redirect(redirectUrl);
+    } catch (error) {
+      console.error('❌ Google OAuth callback error:', error);
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      return res.redirect(`${clientUrl}/login?error=google_auth_error`);
+    }
   }
 }
