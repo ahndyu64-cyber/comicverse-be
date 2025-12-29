@@ -29,13 +29,9 @@ export class UploadController {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      console.log(`[Upload] Starting ${type} upload for file: ${file.originalname}`);
-
       const result = type === 'chapter' 
         ? await this.cloudinaryService.uploadChapterImage(file)
         : await this.cloudinaryService.uploadCoverImage(file);
-      
-      console.log(`[Upload] Success - URL: ${result.url}`);
 
       return res.status(200).json({
         url: result.url,
