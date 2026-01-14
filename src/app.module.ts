@@ -22,12 +22,18 @@ import { BannersModule } from './banners/banners.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const uri = configService.get<string>('MONGO_URI') || 'mongodb://localhost:27017/comicverse';
-        console.log('Connecting to MongoDB at:', uri);
+        console.log('Connecting to MongoDB...');
+        console.log('MONGO_URI exists:', !!uri);
         return {
           uri,
           useNewUrlParser: true,
           useUnifiedTopology: true,
-          serverSelectionTimeoutMS: 5000,
+          serverSelectionTimeoutMS: 10000,
+          connectTimeoutMS: 10000,
+          socketTimeoutMS: 45000,
+          family: 4, // Force IPv4
+          retryWrites: true,
+          w: 'majority',
         };
       },
     }),
