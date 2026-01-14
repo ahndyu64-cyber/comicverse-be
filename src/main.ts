@@ -25,3 +25,8 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+// Export for Vercel serverless (if main.js is detected)
+export default async (req: any, res: any) => {
+  res.status(503).json({ message: 'Use API endpoints at /api or /comics, /banners, etc.' });
+};
