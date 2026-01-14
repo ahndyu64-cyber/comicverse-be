@@ -1,15 +1,13 @@
 {
   "version": 2,
-  "buildCommand": "npm run build && echo 'Build complete'",
+  "buildCommand": "npm run build",
   "public": false,
   "builds": [
     {
       "src": "api/index.ts",
       "use": "@vercel/node",
       "config": {
-        "zeroConfig": true,
-        "runtime": "nodejs20.x",
-        "includeFiles": "dist/**"
+        "runtime": "nodejs20.x"
       }
     }
   ],
@@ -19,6 +17,12 @@
       "dest": "api/index.ts"
     }
   ],
+  "functions": {
+    "api/index.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
   "env": {
     "PORT": "3001",
     "MONGO_URI": "@mongo_uri",
