@@ -1,8 +1,8 @@
-src/main.ts
-src/main.js
-dist/src/main.js
+src/local.ts
+dist/src/
 test/
 .git/
 .env
 .env.local
 node_modules/
+.vercelignore
