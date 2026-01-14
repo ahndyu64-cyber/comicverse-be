@@ -6,7 +6,8 @@
       "src": "api/index.ts",
       "use": "@vercel/node",
       "config": {
-        "zeroConfig": true
+        "zeroConfig": true,
+        "runtime": "nodejs20.x"
       }
     }
   ],
@@ -17,6 +18,7 @@
     }
   ],
   "env": {
+    "PORT": "3001",
     "MONGO_URI": "@mongo_uri",
     "JWT_ACCESS_SECRET": "@jwt_access_secret",
     "JWT_REFRESH_SECRET": "@jwt_refresh_secret",

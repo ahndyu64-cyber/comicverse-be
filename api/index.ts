@@ -23,18 +23,9 @@ async function bootstrap(): Promise<NestExpressApplication> {
 }
 
 export default async (req: any, res: any) => {
-  try {
-    const nestApp = await bootstrap();
-    const server = nestApp.getHttpAdapter().getInstance();
-    
-    return server(req, res);
-  } catch (error) {
-    console.error('Error in serverless handler:', error);
-    res.status(500).json({
-      statusCode: 500,
-      message: 'Internal server error',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
+  const nestApp = await bootstrap();
+  const server = nestApp.getHttpAdapter().getInstance();
+  
+  return server(req, res);
 };
 
