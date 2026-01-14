@@ -1,16 +1,35 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from '../src/app.module';
 
-let app: any;
+let app: NestExpressApplication;
 
-export default async (req, res) => {
+async function bootstrap() {
+  app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Setup CORS for Vercel
+  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  app.enableCors({
+    origin: clientUrl,
+    credentials: true,
+  });
+
+  await app.init();
+}
+
+export default async (req: any, res: any) => {
   if (!app) {
-    app = await NestFactory.create(AppModule);
-    await app.init();
+    await bootstrap();
   }
 
-  const { method, url, headers, body } = req;
-  const rawBody = body || '';
-
-  app.getHttpAdapter().getInstance()(req, res);
+  // Use the underlying Express instance directly
+  return new Promise((resolve, reject) => {
+    app.getHttpAdapter().getInstance()(req, res, (err?: any) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(undefined);
+      }
+    });
+  });
 };

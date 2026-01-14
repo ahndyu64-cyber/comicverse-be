@@ -7,7 +7,7 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.enableCors({
-    origin: 'http://localhost:3000', // Địa chỉ frontend Next.js
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
     credentials: true,
   });
   app.useGlobalPipes(
@@ -19,7 +19,7 @@ async function bootstrap() {
   );
   // serve uploads folder as static
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
-  const port = 3001; // Đổi sang port 3001 cho backend
+  const port = process.env.PORT || 3001;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
 }
