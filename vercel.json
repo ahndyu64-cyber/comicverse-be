@@ -34,4 +34,4 @@
     "SMTP_FROM": "@smtp_from"
   }
 }
-"// Vercel redeploy trigger: $(Get-Date -Format 'yyyyMMdd-HHmmss')"  
+
