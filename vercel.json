@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build && rm -f dist/src/main.js",
+  "buildCommand": "npm run build && node scripts/remove-main.js",
   "public": false,
   "builds": [
     {
