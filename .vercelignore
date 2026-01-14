@@ -1,0 +1,8 @@
+src/main.ts
+src/main.js
+dist/src/main.js
+test/
+.git/
+.env
+.env.local
+node_modules/
