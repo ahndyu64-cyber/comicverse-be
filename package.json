@@ -28,7 +28,6 @@
     "@nestjs/mongoose": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
-    "@nestjs/typeorm": "^11.0.0",
     "@types/nodemailer": "^7.0.4",
     "@types/passport-google-oauth20": "^2.0.17",
     "bcrypt": "^6.0.0",
@@ -45,9 +44,7 @@
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
     "resend": "^6.6.0",
-    "rxjs": "^7.8.1",
-    "sqlite3": "^5.1.7",
-    "typeorm": "^0.3.27"
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
