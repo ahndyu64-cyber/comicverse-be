@@ -3,8 +3,8 @@ services:
     name: comicverse-backend
     env: node
     plan: free
-    buildCommand: npm ci --legacy-peer-deps && npm run build && npm prune --production
-    startCommand: npm run start:prod
+    buildCommand: NODE_OPTIONS=--max-old-space-size=2048 npm ci --legacy-peer-deps && npm run build && npm prune --production
+    startCommand: NODE_OPTIONS=--max-old-space-size=2048 npm run start:prod
     envVars:
       - key: NODE_ENV
         value: production
