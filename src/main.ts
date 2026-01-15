@@ -27,12 +27,12 @@ async function bootstrap() {
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup('swagger', app, document);
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`Swagger available at: http://localhost:${port}/api/docs`);
+  console.log(`Swagger available at: http://localhost:${port}/swagger`);
 }
 
 bootstrap();
