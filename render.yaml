@@ -3,11 +3,14 @@ services:
     name: comicverse-backend
     env: node
     plan: free
-    buildCommand: npm ci --legacy-peer-deps && npm run build && npm prune --production
+    buildCommand: NODE_OPTIONS=--max-old-space-size=2048 npm ci --legacy-peer-deps && NODE_OPTIONS=--max-old-space-size=2048 npm run build && npm prune --production
     startCommand: node dist/main
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=2048
+        scope: runtime
       - key: PORT
         value: 3001
       - key: MONGO_URI
