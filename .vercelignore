@@ -1,8 +1,0 @@
-src/local.ts
-dist/src/
-test/
-.git/
-.env
-.env.local
-node_modules/
-.vercelignore

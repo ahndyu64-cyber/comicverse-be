@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: comicverse-backend
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: MONGO_URI
+        scope: build,runtime
+      - key: JWT_ACCESS_SECRET
+        scope: runtime
+      - key: JWT_REFRESH_SECRET
+        scope: runtime
+      - key: CLIENT_URL
+        scope: runtime
+      - key: GOOGLE_CLIENT_ID
+        scope: runtime
+      - key: GOOGLE_CLIENT_SECRET
+        scope: runtime
+      - key: GOOGLE_CALLBACK_URL
+        scope: runtime
+      - key: CLOUDINARY_CLOUD_NAME
+        scope: runtime
+      - key: CLOUDINARY_API_KEY
+        scope: runtime
+      - key: CLOUDINARY_API_SECRET
+        scope: runtime
+      - key: SMTP_HOST
+        scope: runtime
+      - key: SMTP_PORT
+        scope: runtime
+      - key: SMTP_USER
+        scope: runtime
+      - key: SMTP_PASSWORD
+        scope: runtime
+      - key: SMTP_FROM
+        scope: runtime
